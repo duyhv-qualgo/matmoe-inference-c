@@ -1,0 +1,59 @@
+# ----- CMake / build artifacts -----
+build/
+build-*/
+dist/
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+Makefile
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.lib
+*.exe
+*.pdb
+
+# ----- Generated I/O for the smoke test -----
+prompt.bin
+out_ids.bin
+*.log
+
+# ----- Python -----
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+
+# ----- IDE / editor -----
+.vscode/
+.idea/
+*.swp
+*.swo
+.cache/
+compile_commands.json
+
+# ----- macOS -----
+.DS_Store
+*.dSYM/
+
+# ----- Xcode -----
+xcuserdata/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+DerivedData/
+
+# ----- Android Studio / Gradle (if you scaffold a sample app here) -----
+.gradle/
+local.properties
+.externalNativeBuild/
+.cxx/
+
+# ----- Large model files (uncomment to ignore; use git-lfs if you want
+#       to keep them in the repo). The smoke test reads from models/dim-256/.
+# models/**/*.tflite
