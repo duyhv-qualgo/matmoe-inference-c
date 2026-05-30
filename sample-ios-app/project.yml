@@ -39,6 +39,7 @@ targets:
         HEADER_SEARCH_PATHS:
           - $(SRCROOT)/Frameworks/SlmEngine.xcframework/Headers
           - $(SRCROOT)/Frameworks/SlmEngine.xcframework/ios-arm64/Headers
+          - $(SRCROOT)/Frameworks/SlmEngine.xcframework/ios-arm64-simulator/Headers
           - $(SRCROOT)/Frameworks/SlmEngine.xcframework/ios-arm64_x86_64-simulator/Headers
         OTHER_LDFLAGS:
           - -lc++

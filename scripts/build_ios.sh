@@ -7,8 +7,15 @@
 #      dist/include/slm_engine.h         ← public header
 #
 #  Slices produced:
-#      iphoneos  / arm64                 (physical devices: iPhone, iPad)
-#      iphonesim / arm64 + x86_64        (Apple Silicon + Intel macOS simulators)
+#      iphoneos        / arm64           (physical devices: iPhone, iPad)
+#      iphonesimulator / arm64           (Apple Silicon Mac simulators)
+#      iphonesimulator / x86_64          (only when SIM_X86_64=1; Intel Mac simulators)
+#
+#  XNNPACK refuses multi-arch CMake configures, so the simulator slice is
+#  built once per arch and (when x86_64 is enabled) the merged .a files are
+#  fused with `lipo`. Set SIM_X86_64=1 if you also need Intel Mac sim
+#  support; the default arm64-only path is faster and covers Apple Silicon
+#  developers.
 #
 #  Re-builds are fast: TFLite is built once per slice (~10-25 min the first
 #  time), incrementally afterwards (~10-30 s).
@@ -77,8 +84,11 @@ build_slice () {
   cmake --build "$bld" -j "$JOBS" --target slm_engine
 }
 
-build_slice "iphoneos"       build-ios          iphoneos          "arm64"
-build_slice "iphonesimulator" build-ios-sim     iphonesimulator   "arm64;x86_64"
+build_slice "iphoneos"            build-ios           iphoneos        "arm64"
+build_slice "iphonesimulator-arm64" build-ios-sim-arm64 iphonesimulator "arm64"
+if [[ "${SIM_X86_64:-0}" == "1" ]]; then
+  build_slice "iphonesimulator-x86_64" build-ios-sim-x86_64 iphonesimulator "x86_64"
+fi
 
 # -----------------------------------------------------------------------------
 # Each slice has ~80 small static libs (TFLite + XNNPACK + absl + ...).
@@ -98,8 +108,19 @@ merge_slice () {
 }
 
 mkdir -p "$DIST/_merged"
-merge_slice build-ios     "$DIST/_merged/libSlmEngine-iphoneos.a"
-merge_slice build-ios-sim "$DIST/_merged/libSlmEngine-iphonesim.a"
+merge_slice build-ios            "$DIST/_merged/libSlmEngine-iphoneos.a"
+merge_slice build-ios-sim-arm64  "$DIST/_merged/libSlmEngine-iphonesim-arm64.a"
+SIM_LIB="$DIST/_merged/libSlmEngine-iphonesim-arm64.a"
+if [[ "${SIM_X86_64:-0}" == "1" ]]; then
+  merge_slice build-ios-sim-x86_64 "$DIST/_merged/libSlmEngine-iphonesim-x86_64.a"
+  echo "=== lipo: fusing sim arm64 + x86_64 ============================"
+  lipo -create \
+    "$DIST/_merged/libSlmEngine-iphonesim-arm64.a" \
+    "$DIST/_merged/libSlmEngine-iphonesim-x86_64.a" \
+    -output "$DIST/_merged/libSlmEngine-iphonesim.a"
+  SIM_LIB="$DIST/_merged/libSlmEngine-iphonesim.a"
+  lipo -info "$SIM_LIB"
+fi
 
 # -----------------------------------------------------------------------------
 # Assemble the .xcframework.
@@ -111,7 +132,7 @@ cp include/slm_engine.h "$DIST/include/"
 xcodebuild -create-xcframework \
   -library "$DIST/_merged/libSlmEngine-iphoneos.a" \
     -headers "$DIST/include" \
-  -library "$DIST/_merged/libSlmEngine-iphonesim.a" \
+  -library "$SIM_LIB" \
     -headers "$DIST/include" \
   -output  "$DIST/SlmEngine.xcframework"
 
