@@ -11,6 +11,10 @@ settings:
     SWIFT_VERSION: "5.9"
     IPHONEOS_DEPLOYMENT_TARGET: "16.0"
     ENABLE_USER_SCRIPT_SANDBOXING: NO
+    # We ship our own Info.plist via INFOPLIST_FILE; Xcode 14+ also tries to
+    # auto-generate one from INFOPLIST_KEY_* settings by default. Two plists
+    # in the build → install fails with "Missing bundle ID".
+    GENERATE_INFOPLIST_FILE: NO
     # The Obj-C++ shim #imports the C++ header from the xcframework.
     CLANG_CXX_LANGUAGE_STANDARD: "c++17"
     CLANG_CXX_LIBRARY: "libc++"
@@ -26,6 +30,8 @@ targets:
     platform: iOS
     sources:
       - path: MatMoETranslator
+        excludes:
+          - Info.plist
       - path: Resources
         type: folder
         buildPhase: resources
