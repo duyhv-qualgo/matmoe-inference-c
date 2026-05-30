@@ -33,7 +33,16 @@ if [[ "$STATE" != "Booted" ]]; then
 fi
 open -a Simulator
 
-# ---- 2. Build for the simulator -------------------------------------------
+# ---- 2. Resolve SPM packages ----------------------------------------------
+# Without this, a fresh .xcodeproj + a fresh DerivedData fails the first
+# build with "Missing package product 'Tokenizers'/'Hub'".
+echo "=== Resolving SPM dependencies..."
+xcodebuild -resolvePackageDependencies \
+  -project "$PROJECT" \
+  -scheme "$SCHEME" \
+  -derivedDataPath "$BUILD_DIR" >/dev/null
+
+# ---- 3. Build for the simulator -------------------------------------------
 echo "=== Building $SCHEME for iphonesimulator..."
 xcodebuild \
   -project "$PROJECT" \
