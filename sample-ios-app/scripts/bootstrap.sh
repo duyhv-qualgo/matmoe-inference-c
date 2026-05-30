@@ -39,7 +39,7 @@ fi
 # Always invoke build_ios.sh; CMake handles up-to-date checks itself. The
 # previous "skip if dist/ exists" shortcut silently shipped stale headers
 # when slm_engine sources changed.
-echo "=== Building (or refreshing) $DIST_XCFW…"
+echo "=== Building (or refreshing) $DIST_XCFW..."
 pushd "$MATMOE" >/dev/null
 ./scripts/build_ios.sh
 popd >/dev/null
@@ -69,7 +69,7 @@ if ! command -v xcodegen >/dev/null; then
   echo "ERROR: xcodegen not found. Install with: brew install xcodegen"
   exit 1
 fi
-echo "=== Running xcodegen…"
+echo "=== Running xcodegen..."
 xcodegen generate
 
 echo

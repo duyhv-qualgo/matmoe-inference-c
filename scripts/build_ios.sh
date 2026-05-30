@@ -34,12 +34,12 @@ JOBS="${JOBS:-$(sysctl -n hw.logicalcpu)}"
 # host. Make sure a host build has run far enough to produce it; if not, do
 # just enough to materialise it.
 if [[ ! -d "$ROOT/build" || ! -d "$TF_SRC" ]]; then
-  echo "=== Bootstrapping host build (fetches TF source, builds flatc only)…"
+  echo "=== Bootstrapping host build (fetches TF source, builds flatc only)..."
   cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 fi
 HOST_FLATC="$(find "$ROOT/build" -name flatc -type f -perm -u+x 2>/dev/null | head -1)"
 if [[ -z "$HOST_FLATC" ]]; then
-  echo "=== Building host flatc…"
+  echo "=== Building host flatc..."
   cmake --build build -j "$JOBS" --target flatc
   HOST_FLATC="$(find "$ROOT/build" -name flatc -type f -perm -u+x | head -1)"
 fi

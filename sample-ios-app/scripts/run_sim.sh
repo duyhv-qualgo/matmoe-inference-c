@@ -28,13 +28,13 @@ if [[ -z "$UDID" ]]; then
 fi
 STATE="$(xcrun simctl list devices | awk -v u="$UDID" '$0 ~ u { match($0, /\(([A-Za-z]+)\)/, a); print a[1]; exit }')"
 if [[ "$STATE" != "Booted" ]]; then
-  echo "=== Booting simulator $SIM_NAME ($UDID)…"
+  echo "=== Booting simulator $SIM_NAME ($UDID)..."
   xcrun simctl boot "$UDID"
 fi
 open -a Simulator
 
 # ---- 2. Build for the simulator -------------------------------------------
-echo "=== Building $SCHEME for iphonesimulator…"
+echo "=== Building $SCHEME for iphonesimulator..."
 xcodebuild \
   -project "$PROJECT" \
   -scheme "$SCHEME" \
