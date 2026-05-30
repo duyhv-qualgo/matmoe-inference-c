@@ -14,6 +14,13 @@ settings:
     # The Obj-C++ shim #imports the C++ header from the xcframework.
     CLANG_CXX_LANGUAGE_STANDARD: "c++17"
     CLANG_CXX_LIBRARY: "libc++"
+    # Xcode 26's debug-dylib build splits the main executable into a thin
+    # host binary + a .debug.dylib for faster SwiftUI Previews, but the
+    # iOS 26 simulator's installer fails to read the bundle metadata from
+    # the host and rejects the install with IXErrorDomain code 13
+    # "Missing bundle ID" — even though the .app/Info.plist is perfectly
+    # valid. Force the classic single-binary layout for Debug builds.
+    ENABLE_DEBUG_DYLIB: NO
 
 packages:
   swift-transformers:
