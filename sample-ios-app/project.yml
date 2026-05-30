@@ -35,10 +35,15 @@ targets:
       - path: MatMoETranslator
         excludes:
           - Info.plist
+      # Resources/ is an ordinary group, NOT type: folder. Folder references
+      # ship as opaque blue folders that Xcode's signing step does not
+      # enumerate, leaving Info.plist + nested files outside the code
+      # signature -> simulator install fails with IXErrorDomain 13
+      # "Missing bundle ID" because codesign shows "Info.plist=not bound".
+      # Cost: if you drop a new file into Resources/, re-run xcodegen.
       - path: Resources
-        type: folder
-        buildPhase: resources
         optional: true
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.matmoe.MatMoETranslator
