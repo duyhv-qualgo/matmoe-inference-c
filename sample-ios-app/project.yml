@@ -1,0 +1,52 @@
+name: MatMoETranslator
+options:
+  bundleIdPrefix: com.example.matmoe
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    # The Obj-C++ shim #imports the C++ header from the xcframework.
+    CLANG_CXX_LANGUAGE_STANDARD: "c++17"
+    CLANG_CXX_LIBRARY: "libc++"
+
+packages:
+  swift-transformers:
+    url: https://github.com/huggingface/swift-transformers
+    from: "1.3.3"
+
+targets:
+  MatMoETranslator:
+    type: application
+    platform: iOS
+    sources:
+      - path: MatMoETranslator
+      - path: Resources
+        type: folder
+        buildPhase: resources
+        optional: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.matmoe.MatMoETranslator
+        INFOPLIST_FILE: MatMoETranslator/Info.plist
+        SWIFT_OBJC_BRIDGING_HEADER: MatMoETranslator/MatMoETranslator-Bridging-Header.h
+        # The .xcframework exposes slm_engine.h at its include root.
+        HEADER_SEARCH_PATHS:
+          - $(SRCROOT)/Frameworks/SlmEngine.xcframework/Headers
+          - $(SRCROOT)/Frameworks/SlmEngine.xcframework/ios-arm64/Headers
+          - $(SRCROOT)/Frameworks/SlmEngine.xcframework/ios-arm64_x86_64-simulator/Headers
+        OTHER_LDFLAGS:
+          - -lc++
+        TARGETED_DEVICE_FAMILY: "1,2"
+    dependencies:
+      - framework: Frameworks/SlmEngine.xcframework
+        embed: false
+      - package: swift-transformers
+        product: Tokenizers
+      - package: swift-transformers
+        product: Hub

@@ -158,12 +158,25 @@ an Objective-C++ `.mm` shim.
 
 ```swift
 let bridge = MatMoEBridge()
-bridge.initWithEncoder(encPath, decoder: decPath, threads: 4)
+bridge.load(encoderPath: encPath, decoderPath: decPath, threads: 4)
 
 let (ids, mask) = tokenizer.encode("<translate-en-vi> Hello, how are you?")
-let outIds = bridge.generate(withSrcIds: ids, mask: mask,
-                             maxNew: 60, padId: 0, eosId: 1)
+let outIds = bridge.generate(srcIds: ids, srcMask: mask,
+                             maxNewTokens: 60, padId: 0, eosId: 1,
+                             method: .greedy,
+                             temperature: 0.7, topK: 40, topP: 0.9, seed: 42)
 let text   = tokenizer.decode(outIds.map { $0.int32Value })
+```
+
+A working end-to-end sample (SwiftUI app + Obj-C++ shim + swift-transformers
+tokenizer + XcodeGen) lives in [`sample-ios-app/`](sample-ios-app/README.md).
+Build + launch on an iPhone simulator with:
+
+```bash
+cd sample-ios-app
+# drop encode_prefill.tflite, decode_step.tflite, tokenizer.json into Resources/
+./scripts/bootstrap.sh     # builds xcframework + generates the .xcodeproj
+./scripts/run_sim.sh       # boots iPhone sim, builds, installs, launches
 ```
 
 ### Android

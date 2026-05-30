@@ -1,0 +1,24 @@
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# SPM
+.swiftpm/
+.build/
+Packages/
+
+# Generated xcframework (produced by scripts/bootstrap.sh from matmoe-inference-c)
+Frameworks/
+
+# Bundled model + tokenizer (large, user-provided, never checked in)
+Resources/encode_prefill.tflite
+Resources/decode_step.tflite
+Resources/tokenizer.json
+
+# macOS
+.DS_Store
