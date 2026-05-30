@@ -72,6 +72,17 @@ fi
 echo "=== Running xcodegen..."
 xcodegen generate
 
+# ---- 5. Resolve SPM packages now ------------------------------------------
+# Without this, opening MatMoETranslator.xcodeproj in Xcode straight after
+# a clean re-generate fails with "Missing package product 'Tokenizers'"
+# until you manually trigger File -> Packages -> Resolve.
+if [[ -d "MatMoETranslator.xcodeproj" ]]; then
+  echo "=== Resolving SPM dependencies (swift-transformers)..."
+  xcodebuild -resolvePackageDependencies \
+    -project MatMoETranslator.xcodeproj \
+    -scheme MatMoETranslator >/dev/null
+fi
+
 echo
 echo "================================================================="
 echo "Done."
