@@ -23,9 +23,28 @@ TF_SRC="$ROOT/build/tflite_build/tensorflow-src"   # reuse macOS-fetched TF
 IOS_DEPLOY_TARGET="${IOS_DEPLOY_TARGET:-14.0}"
 JOBS="${JOBS:-$(sysctl -n hw.logicalcpu)}"
 
+# Cross-compiling TFLite needs `flatc` (the FlatBuffers compiler) built for the
+# host. Make sure a host build has run far enough to produce it; if not, do
+# just enough to materialise it.
+if [[ ! -d "$ROOT/build" || ! -d "$TF_SRC" ]]; then
+  echo "=== Bootstrapping host build (fetches TF source, builds flatc only)…"
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+fi
+HOST_FLATC="$(find "$ROOT/build" -name flatc -type f -perm -u+x 2>/dev/null | head -1)"
+if [[ -z "$HOST_FLATC" ]]; then
+  echo "=== Building host flatc…"
+  cmake --build build -j "$JOBS" --target flatc
+  HOST_FLATC="$(find "$ROOT/build" -name flatc -type f -perm -u+x | head -1)"
+fi
+if [[ -z "$HOST_FLATC" ]]; then
+  echo "ERROR: Could not locate host flatc after build. Tried: $ROOT/build"
+  exit 1
+fi
+HOST_TOOLS_DIR="$(dirname "$HOST_FLATC")"
+echo "=== Using host flatc at: $HOST_FLATC"
+
 if [[ ! -d "$TF_SRC" ]]; then
-  echo "ERROR: TensorFlow source not found at $TF_SRC"
-  echo "       Run a desktop build first: cmake -S . -B build && cmake --build build -j"
+  echo "ERROR: TensorFlow source not found at $TF_SRC after host bootstrap."
   exit 1
 fi
 
@@ -47,6 +66,7 @@ build_slice () {
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
     -DBUILD_SHARED_LIBS=OFF \
     -DTENSORFLOW_SOURCE_DIR="$TF_SRC" \
+    -DTFLITE_HOST_TOOLS_DIR="$HOST_TOOLS_DIR" \
     -DTFLITE_ENABLE_XNNPACK=ON \
     -DTFLITE_ENABLE_GPU=OFF \
     -DTFLITE_ENABLE_RUY=ON
