@@ -35,15 +35,14 @@ if [[ ! -f "$MATMOE/CMakeLists.txt" ]]; then
   exit 1
 fi
 
-# ---- 1. Build the xcframework if it isn't there ----------------------------
-if [[ ! -d "$DIST_XCFW" ]]; then
-  echo "=== SlmEngine.xcframework not found, building it (first time: ~25 min)…"
-  pushd "$MATMOE" >/dev/null
-  ./scripts/build_ios.sh
-  popd >/dev/null
-else
-  echo "=== Re-using existing $DIST_XCFW"
-fi
+# ---- 1. Build (or rebuild) the xcframework -------------------------------
+# Always invoke build_ios.sh; CMake handles up-to-date checks itself. The
+# previous "skip if dist/ exists" shortcut silently shipped stale headers
+# when slm_engine sources changed.
+echo "=== Building (or refreshing) $DIST_XCFW…"
+pushd "$MATMOE" >/dev/null
+./scripts/build_ios.sh
+popd >/dev/null
 
 # ---- 2. Sync it into the app ----------------------------------------------
 mkdir -p "$APP_ROOT/Frameworks"
