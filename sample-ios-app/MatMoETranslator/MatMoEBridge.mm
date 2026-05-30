@@ -1,30 +1,35 @@
 #import "MatMoEBridge.h"
 
-#include <memory>
-#include <string>
 #include <vector>
 
-#include "slm_engine.h"
+#include "slm_engine_c.h"
 
 @implementation MatMoEBridge {
-    std::unique_ptr<matmoe::SlmEngine> _eng;
-    std::string _lastError;
+    MatMoeEngine _eng;
+    NSString *_overrideError;
 }
 
 - (instancetype)init {
     if ((self = [super init])) {
-        _eng = std::make_unique<matmoe::SlmEngine>();
+        _eng = matmoe_engine_create();
     }
     return self;
+}
+
+- (void)dealloc {
+    if (_eng) {
+        matmoe_engine_destroy(_eng);
+        _eng = NULL;
+    }
 }
 
 - (BOOL)loadEncoderPath:(NSString *)encoderPath
             decoderPath:(NSString *)decoderPath
                 threads:(int)threads {
-    const bool ok = _eng->Init([encoderPath UTF8String],
-                               [decoderPath UTF8String],
-                               threads);
-    if (!ok) _lastError = _eng->LastError();
+    const int ok = matmoe_engine_load(_eng,
+                                      [encoderPath UTF8String],
+                                      [decoderPath UTF8String],
+                                      threads);
     return ok ? YES : NO;
 }
 
@@ -38,41 +43,36 @@
                                    topK:(int)topK
                                    topP:(float)topP
                                    seed:(uint64_t)seed {
-    if (srcIds.count != matmoe::kMaxSrcLen ||
-        srcMask.count != matmoe::kMaxSrcLen) {
-        _lastError = "srcIds / srcMask must each be exactly 128 elements";
+    if (srcIds.count != MATMOE_MAX_SRC_LEN ||
+        srcMask.count != MATMOE_MAX_SRC_LEN) {
+        _overrideError = @"srcIds / srcMask must each be exactly 128 elements";
         return @[];
     }
+    _overrideError = nil;
 
-    std::vector<int32_t> ids(matmoe::kMaxSrcLen);
-    std::vector<int32_t> mask(matmoe::kMaxSrcLen);
-    for (NSUInteger i = 0; i < matmoe::kMaxSrcLen; ++i) {
+    std::vector<int32_t> ids(MATMOE_MAX_SRC_LEN);
+    std::vector<int32_t> mask(MATMOE_MAX_SRC_LEN);
+    for (NSUInteger i = 0; i < MATMOE_MAX_SRC_LEN; ++i) {
         ids[i]  = [srcIds[i] intValue];
         mask[i] = [srcMask[i] intValue];
     }
 
-    matmoe::GenerationConfig cfg;
-    cfg.max_new_tokens   = maxNewTokens;
-    cfg.pad_id           = padId;
-    cfg.eos_id           = eosId;
-    cfg.sampling.method  = (method == MatMoESamplingTopKTopP)
-                              ? matmoe::SamplingOptions::kSample
-                              : matmoe::SamplingOptions::kGreedy;
-    cfg.sampling.temperature = temperature;
-    cfg.sampling.top_k       = topK;
-    cfg.sampling.top_p       = topP;
-    cfg.sampling.seed        = seed;
+    const MatMoeSamplingMethod cMethod =
+        (method == MatMoESamplingTopKTopP)
+            ? MATMOE_SAMPLING_TOP_K_TOP_P
+            : MATMOE_SAMPLING_GREEDY;
 
-    std::vector<int32_t> out(matmoe::kMaxTgtLen, 0);
-    const int n = _eng->Generate(ids.data(), mask.data(), cfg,
-                                 out.data(), static_cast<int>(out.size()));
-    if (n < 0) {
-        _lastError = _eng->LastError();
-        return @[];
-    }
+    std::vector<int32_t> out(MATMOE_MAX_TGT_LEN, 0);
+    const int n = matmoe_engine_generate(_eng,
+                                          ids.data(), mask.data(),
+                                          maxNewTokens, padId, eosId,
+                                          cMethod, temperature,
+                                          topK, topP, seed,
+                                          out.data(),
+                                          static_cast<int>(out.size()));
+    if (n < 0) return @[];
 
-    // Strip a trailing EOS (the Python decoder skips special tokens anyway,
-    // but stripping here keeps the public API closer to "just the words").
+    // Strip a trailing EOS so callers get just the words.
     int realN = n;
     if (realN > 0 && out[realN - 1] == eosId) --realN;
 
@@ -85,15 +85,13 @@
 }
 
 - (int)vocabSize {
-    return _eng->VocabSize();
+    return matmoe_engine_vocab_size(_eng);
 }
 
 - (NSString *)lastError {
-    if (!_lastError.empty()) {
-        return [NSString stringWithUTF8String:_lastError.c_str()];
-    }
-    const std::string &eng_err = _eng->LastError();
-    return [NSString stringWithUTF8String:eng_err.c_str()];
+    if (_overrideError) return _overrideError;
+    const char *msg = matmoe_engine_last_error(_eng);
+    return msg ? [NSString stringWithUTF8String:msg] : @"";
 }
 
 @end

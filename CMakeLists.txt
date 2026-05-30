@@ -21,6 +21,7 @@ add_subdirectory("${TFLITE_SOURCE_DIR}"
 # ---- Engine library ----
 add_library(slm_engine
     src/slm_engine.cpp
+    src/slm_engine_c.cc
 )
 target_include_directories(slm_engine
     PUBLIC

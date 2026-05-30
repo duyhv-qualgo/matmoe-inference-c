@@ -127,7 +127,9 @@ fi
 # -----------------------------------------------------------------------------
 rm -rf "$DIST/SlmEngine.xcframework"
 mkdir -p "$DIST/include"
-cp include/slm_engine.h "$DIST/include/"
+# Ship only the C header: it has no TFLite / STL dependencies so consumers
+# (Obj-C++ / Swift / JNI) don't need TFLite headers on disk to compile.
+cp include/slm_engine_c.h "$DIST/include/"
 
 xcodebuild -create-xcframework \
   -library "$DIST/_merged/libSlmEngine-iphoneos.a" \
