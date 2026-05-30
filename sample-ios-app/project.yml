@@ -38,20 +38,12 @@ targets:
         PRODUCT_NAME: MatMoETranslator
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
-        # The Info.plist in MatMoETranslator/ is intentionally empty: XcodeGen
-        # auto-detects an Info.plist file in the target's source tree and
-        # wires INFOPLIST_FILE to it, but we want Xcode to *generate* the
-        # plist contents from these build settings so the bundle id
-        # definitely lands. GENERATE_INFOPLIST_FILE=YES + an empty plist
-        # gives us a synthesised plist; the empty file just satisfies the
-        # build-input check.
+        # Everything bundle-related is hardcoded inside Info.plist (no $(...)
+        # substitution, no auto-generated keys merged in). Disable
+        # GENERATE_INFOPLIST_FILE so Xcode 26.3 doesn't try to merge anything
+        # on top and end up with no bundle id.
         INFOPLIST_FILE: MatMoETranslator/Info.plist
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: "MatMoE Translator"
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait"
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        GENERATE_INFOPLIST_FILE: NO
         SWIFT_OBJC_BRIDGING_HEADER: MatMoETranslator/MatMoETranslator-Bridging-Header.h
         # The .xcframework exposes the C API header at its slice Headers/ root.
         HEADER_SEARCH_PATHS:
